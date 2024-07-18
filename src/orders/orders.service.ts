@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Order } from './../db'; // Zakładając, że istnieje plik db.ts, w którym zdefiniowana jest klasa Order
+import { Order } from './../db';
 import { CreateOrderDTO } from './dtos/create-order.dto';
 import { UpdateOrderDTO } from './dtos/update-order.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class OrdersService {
-  private orders: Order[] = []; // Przykładowa tablica przechowująca zamówienia
+  private orders: Order[] = [];
 
   getAll(): Order[] {
     return this.orders;
