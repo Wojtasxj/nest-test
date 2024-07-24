@@ -1,40 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Order } from './../db';
+import { PrismaService } from 'src/shared/services/prisma.service';
+import { Order } from '@prisma/client'; // Prisma-generated type for Order
 import { CreateOrderDTO } from './dtos/create-order.dto';
 import { UpdateOrderDTO } from './dtos/update-order.dto';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class OrdersService {
-  private orders: Order[] = [];
+  constructor(private prismaService: PrismaService) {}
 
-  getAll(): Order[] {
-    return this.orders;
+  async getAll(): Promise<Order[]> {
+    return this.prismaService.order.findMany();
   }
 
-  getById(id: string): Order | undefined {
-    return this.orders.find(order => order.id === id);
+  async getById(id: string): Promise<Order> {
+    const order = await this.prismaService.order.findUnique({ where: { id } });
+    if (!order) throw new NotFoundException('Order not found');
+    return order;
   }
 
-  create(orderData: CreateOrderDTO): Order {
-    const newOrder: Order = { id: uuidv4(), ...orderData };
-    this.orders.push(newOrder);
-    return newOrder;
+  async create(orderData: CreateOrderDTO): Promise<Order> {
+    return this.prismaService.order.create({ data: orderData });
   }
 
-  updateById(id: string, updateOrderData: UpdateOrderDTO): void {
-    const orderIndex = this.orders.findIndex(order => order.id === id);
-    if (orderIndex === -1) {
-      throw new NotFoundException('Order not found');
-    }
-    this.orders[orderIndex] = { ...this.orders[orderIndex], ...updateOrderData };
+  async updateById(id: string, updateOrderData: UpdateOrderDTO): Promise<Order> {
+    const order = await this.prismaService.order.findUnique({ where: { id } });
+    if (!order) throw new NotFoundException('Order not found');
+
+    return this.prismaService.order.update({
+      where: { id },
+      data: updateOrderData,
+    });
   }
 
-  deleteById(id: string): void {
-    const orderIndex = this.orders.findIndex(order => order.id === id);
-    if (orderIndex === -1) {
-      throw new NotFoundException('Order not found');
-    }
-    this.orders.splice(orderIndex, 1);
+  async deleteById(id: string): Promise<void> {
+    const order = await this.prismaService.order.findUnique({ where: { id } });
+    if (!order) throw new NotFoundException('Order not found');
+
+    await this.prismaService.order.delete({ where: { id } });
   }
 }
