@@ -8,27 +8,44 @@ import { UpdateOrderDTO } from './dtos/update-order.dto';
 export class OrdersService {
   constructor(private prismaService: PrismaService) {}
 
-  async getAll(): Promise<Order[]> {
-    return this.prismaService.order.findMany();
+  public getAll(): Promise<Order[]> {
+    return this.prismaService.order.findMany({ include: { product: true } });
   }
 
-  async getById(id: string): Promise<Order> {
-    const order = await this.prismaService.order.findUnique({ where: { id } });
-    if (!order) throw new NotFoundException('Order not found');
-    return order;
+  public getById(id: Order['id']): Promise<Order | null> {
+    return this.prismaService.order.findUnique({
+      where: { id },
+      include: { product: true },
+    });
   }
 
-  async create(orderData: CreateOrderDTO): Promise<Order> {
-    return this.prismaService.order.create({ data: orderData });
+  public create(
+    orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Order> {
+    const { productId, ...otherData } = orderData;
+    return this.prismaService.order.create({
+      data: {
+        ...otherData,
+        product: {
+          connect: { id: productId },
+        },
+      }
+    });
   }
 
-  async updateById(id: string, updateOrderData: UpdateOrderDTO): Promise<Order> {
-    const order = await this.prismaService.order.findUnique({ where: { id } });
-    if (!order) throw new NotFoundException('Order not found');
-
+  public updateById(
+    id: Order['id'],
+    orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Order> {
+    const { productId, ...otherData } = orderData;
     return this.prismaService.order.update({
       where: { id },
-      data: updateOrderData,
+      data: {
+        ...otherData,
+        product: {
+          connect: { id: productId },
+        },
+      },
     });
   }
 
