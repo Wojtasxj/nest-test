@@ -7,6 +7,11 @@ export class UpdateOrderDTO {
   productId: string;
 
   @IsOptional()
+  @IsUUID()
+  @IsString()
+  clientId: string;
+
+  @IsOptional()
   @IsString()
   client: string;
 
